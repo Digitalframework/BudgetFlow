@@ -1,0 +1,90 @@
+# ==========================================
+# Kotlin Multiplatform & Gradle Base
+# ==========================================
+.gradle/
+build/
+**/build/
+.kotlin/
+*.class
+*.dex
+*.iml
+
+# Local configuration files (contains your SDK paths, etc.)
+local.properties
+
+# ==========================================
+# IDEs (Android Studio, IntelliJ, VS Code)
+# ==========================================
+.idea/
+*.ipr
+*.iws
+.out/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# ==========================================
+# React JS / Web Target (Node / Bundlers)
+# ==========================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.eslintcache
+.stylelintcache
+dist/
+out-tsc/
+.next/
+.nuxt/
+
+# Keep lockfiles committed for reproducible builds, 
+# but if you prefer to let them auto-generate, uncomment these:
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# ==========================================
+# Android Specifics
+# ==========================================
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.ap_
+*.aab
+
+# ==========================================
+# iOS Specifics (Xcode / CocoaPods)
+# ==========================================
+# User settings & layout states
+*.xcuserstate
+*.xcuserdatad
+xcuserdata/
+
+# Xcode architecture / build artifacts
+DerivedData/
+*.moved-aside
+*.xccheckout
+*.plugins
+
+# Objective-C/Swift packaging
+*.ipa
+*.dSYM
+*.dSYM.zip
+
+# CocoaPods (If you are using them instead of KMP native framework management)
+# Only uncomment Pods/ if you want to pull them fresh on every machine via 'pod install'
+# Pods/
+
+# ==========================================
+# Operating System Noise
+# ==========================================
+.DS_Store
+.DS_Store?
+._*
+Thumds.db
+ehthumbs.db
+Log.txt
