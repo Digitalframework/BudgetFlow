@@ -1,7 +1,10 @@
 package components
 
+import antd.Select
 import antd.Table
 import antd.TableColumnProps
+import antd.Tag
+import antd.Tooltip
 import web.cssom.*
 import com.banking.shared.data.Category
 import com.banking.shared.data.Transaction
@@ -29,104 +32,141 @@ external interface TransactionTableProps : Props {
 val TransactionTable: FC<TransactionTableProps> = FC { props ->
     val (editingId, setEditingId) = useState<String?>(null)
 
-    // Use dynamic array for columns
     val columns: dynamic = arrayOf(
+
+        // ── Datum ─────────────────────────────────────────────────────────────
         jso<TableColumnProps> {
-            title = "DATUM"
+            title = "Datum"
             dataIndex = "date"
             key = "date"
-            width = 100
+            width = 110
+            sorter = { a: dynamic, b: dynamic ->
+                (a.date as? String ?: "").compareTo(b.date as? String ?: "")
+            }
             render = { value: dynamic, _: dynamic, _: dynamic ->
                 Fragment.create {
                     span {
                         style = jso {
-                            color = Color("#DDDDDD")
-                            fontSize = 14.px
+                            fontFamily = string("'DM Mono', monospace")
+                            fontSize = 12.px
+                            color = Color("#64748b")
                         }
-                        +value.toString()
+                        +(value?.toString() ?: "")
                     }
                 }.asDynamic()
             }
         },
+
+        // ── Beschreibung ──────────────────────────────────────────────────────
         jso<TableColumnProps> {
-            title = "BESCHREIBUNG"
+            title = "Beschreibung"
             dataIndex = "description"
             key = "description"
             ellipsis = true
             render = { value: dynamic, _: dynamic, _: dynamic ->
-                val displayValue = if (value != null) {
-                    val s = value.toString()
-                    if (s.length > 60) s.take(60) + "…" else s
-                } else ""
+                val raw = value?.toString() ?: ""
+                val display = if (raw.length > 60) raw.take(60) + "…" else raw
                 Fragment.create {
-                    span {
-                        style = jso {
-                            color = Color("#DDDDDD")
-                            fontSize = 14.px
+                    Tooltip {
+                        title = raw
+                        children = Fragment.create {
+                            span {
+                                style = jso {
+                                    fontSize = 13.px
+                                    color = Color("#e2e8f0")
+                                }
+                                +display
+                            }
                         }
-                        +displayValue
                     }
                 }.asDynamic()
             }
         },
+
+        // ── Betrag ────────────────────────────────────────────────────────────
         jso<TableColumnProps> {
-            title = "BETRAG"
+            title = "Betrag"
             dataIndex = "amount"
             key = "amount"
-            width = 100
+            width = 120
             align = "right"
+            sorter = { a: dynamic, b: dynamic ->
+                val aVal = (a.amount as? Number)?.toDouble() ?: 0.0
+                val bVal = (b.amount as? Number)?.toDouble() ?: 0.0
+                aVal.compareTo(bVal)
+            }
             render = { value: dynamic, _: dynamic, _: dynamic ->
                 val amount = (value as? Number)?.toDouble() ?: 0.0
-                val formatted = "${if (amount >= 0) "+" else ""}€${(amount * 100).toLong() / 100.0}"
-                val baseColor = if (amount >= 0) "#52C41A" else "#FF4D4F"
+                val formatted = "${if (amount >= 0) "+" else ""} ${amount.asDynamic().toFixed(2)}€"
+                val baseColor = if (amount >= 0) "#52c41a" else "#ff4d4f"
                 Fragment.create {
                     span {
                         style = jso {
                             color = Color(baseColor)
                             fontWeight = FontWeight.bold
-                            fontSize = 14.px
+                            fontFamily = string("'DM Mono', monospace")
+                            fontSize = 12.px
                         }
                         +formatted
                     }
                 }.asDynamic()
             }
         },
+
+        // ── Kategorie ─────────────────────────────────────────────────────────
         jso<TableColumnProps> {
-            title = "KATEGORIE"
+            title = "Kategorie"
             dataIndex = "category"
             key = "category"
-            width = 180
-            jso<TableColumnProps> {
-                title = "KATEGORIE"
-                dataIndex = "category"
-                key = "category"
-                width = 180
-                render = { value: dynamic, record: dynamic, _: dynamic ->
-                    // ✅ Read directly from dynamic record, NOT cast to Transaction
-                    val txId = record.id as? String ?: ""
-                    val txCategory = record.category as? String ?: ""
+            width = 200
+            render = { _: dynamic, record: dynamic, _: dynamic ->
+                val txId = record.id as? String ?: ""
+                val txCategory = record.category as? String ?: ""
+                val category = props.categories.find { it.name == txCategory }
+                val catColor = category?.color ?: "#8c8c8c"
+                val catIcon = category?.icon ?: "❓"
+                val catLabel = category?.label ?: txCategory
 
-                    val category = props.categories.find { it.name == txCategory }
-                    val catColor = category?.color ?: "#8c8c8c"
-                    val catIcon = category?.icon ?: "❓"
-                    val catLabel = category?.label ?: txCategory
-                    Fragment.create {
-                        if (editingId == txId) {
-                            div {
-                                id = "category-select-${txId}"
-                                style = jso { width = 100.pct }
+                Fragment.create {
+                    if (editingId == txId) {
+                        // ── Inline category select ─────────────────────────
+                        val options = props.categories.map { cat ->
+                            jso<dynamic> {
+                                value = cat.name
+                                label = "${cat.icon} ${cat.label}"
                             }
-                        } else {
-                            span {
-                                style = jso {
-                                    color = Color(catColor)
-                                    fontSize = 14.px
+                        }.toTypedArray()
+
+                        Select {
+                            defaultValue = txCategory
+                            size = "small"
+                            //autoFocus = true
+                            style = jso { width = 180.px }
+                            this.options = options
+                            onChange = { value: String? ->
+                                if (value != null) {
+                                    props.onCategoryChange(txId, value)
                                 }
+                                setEditingId(null)
+                            }
+                            //nBlur = { setEditingId(null) }
+                        }
+                    } else {
+                        // ── Category tag ───────────────────────────────────
+                        Tag {
+                            color = catColor
+                            style = jso {
+                                cursor = Cursor.pointer
+                                borderRadius = 8.px
+                                fontSize = 12.px
+                            }
+                            //onClick = { setEditingId(txId) }
+                            children = Fragment.create {
                                 +"$catIcon $catLabel"
                             }
                         }
-                    }.asDynamic()
-                }
+                    }
+                }.asDynamic()
             }
         }
     )
@@ -142,29 +182,34 @@ val TransactionTable: FC<TransactionTableProps> = FC { props ->
     }
 
     div {
-        style = jso {
-            width = 100.pct
-        }
+        style = jso { width = 100.pct }
+
         Table {
             this.columns = columns
             this.dataSource = dataSource.toTypedArray()
-            this.pagination = jso {
-                pageSize = 20
-            }
-            this.scroll = jso {
-                y = 700
-            }
             this.rowKey = "id"
+            this.size = "small"
+            this.pagination = jso {
+                pageSize = 25
+                showSizeChanger = true
+                pageSizeOptions = arrayOf("10", "25", "50", "100")
+            }
+            this.scroll = jso { x = 700 }
+            this.style = jso {
+                borderRadius = 12.px
+                overflow = Overflow.hidden
+            }
+            this.rowClassName = { record: dynamic, _: dynamic ->
+                val amount = (record.amount as? Number)?.toDouble() ?: 0.0
+                if (amount >= 0) "row-income" else "row-expense"
+            }
             this.onRow = { record: dynamic, _: dynamic ->
-        jso<TableRowProps> {
+                jso<TableRowProps> {
                     onClick = { _ ->
                         val id = record.id as? String
                         if (id != null) setEditingId(id)
                     }
                 }
-            }
-            this.style = jso {
-                background = Color("#111127")
             }
         }
     }

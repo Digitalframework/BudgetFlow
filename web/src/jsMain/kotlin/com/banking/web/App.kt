@@ -349,6 +349,7 @@ val HeaderContent: FC<HeaderContentProps> = FC { props ->
         style = jso {
           borderRadius = 8.px
           background = Color("#111127")
+          if(!props.canClear) color = Color("#ffffff") else Color("#ff7875")
 
         }
         children = Fragment.create { +"Löschen" }
