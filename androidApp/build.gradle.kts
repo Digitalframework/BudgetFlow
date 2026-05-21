@@ -15,6 +15,10 @@ kotlin {
 
     sourceSets {
         val androidMain by getting {
+            // Point the Kotlin Multiplatform plugin to your newly renamed directory structure
+            kotlin.srcDirs("src/androidMain/kotlin")
+            resources.srcDirs("src/androidMain/res")
+
             dependencies {
                 implementation(project(":shared"))
                 implementation("androidx.activity:activity-compose:1.8.2")
@@ -33,6 +37,15 @@ kotlin {
 android {
     namespace = "com.banking.app"
     compileSdk = 34
+
+    // Crucial Adjustment: Map Android's core build system to look into androidMain
+    sourceSets {
+        getByName("main") {
+            manifest.srcFile("src/androidMain/AndroidManifest.xml")
+            res.srcDirs("src/androidMain/res")
+            java.srcDirs("src/androidMain/kotlin")
+        }
+    }
 
     defaultConfig {
         applicationId = "com.banking.app"
@@ -68,6 +81,6 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
+            pickFirsts.add("META-INF/native-image/org.mongodb/bson/native-image.properties")        }
     }
 }
