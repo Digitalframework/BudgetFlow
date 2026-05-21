@@ -5,7 +5,7 @@ import com.banking.shared.data.Transaction
 /**
  * JavaScript/Node.js implementation of TransactionDocument.
  */
-actual class TransactionDocument(
+actual class TransactionDocument actual constructor(
     actual val _id: String,
     actual val id: String,
     actual val date: String,
