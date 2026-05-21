@@ -10,8 +10,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import data.Category
-import data.Transaction
+import com.banking.shared.data.Category
+import com.banking.shared.data.Transaction
 
 @Composable
 fun TransactionTable(
@@ -109,7 +109,7 @@ fun TransactionRow(
                     }
                 },
                 colors = AssistChipDefaults.assistChipColors(
-                    containerColor = Color(currentCategory?.color ?: "#8c8c8c").copy(alpha = 0.2f)
+                    containerColor = Color(126).copy(alpha = 0.2f) //currentCategory?.color ?:
                 )
             )
 

@@ -8,9 +8,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import com.banking.app.ui.BankingApp
 import com.banking.app.ui.theme.BankingAppTheme
-import data.createTransactionRepository
+import data.MongoDbAndroid
 import viewmodel.TransactionViewModel
+
 
 class MainActivity : ComponentActivity() {
 
@@ -21,7 +23,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         // Initialize repository and ViewModel
-        val repository = createTransactionRepository(applicationContext)
+        val repository = MongoDbAndroid(applicationContext)
         viewModel = TransactionViewModel(repository)
 
         setContent {

@@ -68,6 +68,7 @@ kotlin {
             dependsOn(commonTest)
         }
         val androidMain by getting {
+            dependsOn(commonMain)
             dependencies {
                 implementation("androidx.core:core-ktx:1.12.0")
                 implementation("org.mongodb:mongodb-driver-kotlin-coroutine:4.11.0")

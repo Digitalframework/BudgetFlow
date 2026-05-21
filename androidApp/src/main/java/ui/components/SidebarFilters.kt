@@ -8,8 +8,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import data.CategoryMapper
-import data.TransactionFilter
+import com.banking.shared.data.CategoryMapper
+import com.banking.shared.data.TransactionFilter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,8 +84,8 @@ fun SidebarFilters(
                     )
                 }
 
-                items(CategoryMapper.CATEGORIES.size) { index ->
-                    val (key, category) = CategoryMapper.CATEGORIES.toList()[index]
+                items(CategoryMapper.shared.CATEGORIES.size) { index ->
+                    val (key, category) = CategoryMapper.shared.CATEGORIES.toList()[index]
                     FilterChip(
                         selected = selectedCategory == key,
                         onClick = {

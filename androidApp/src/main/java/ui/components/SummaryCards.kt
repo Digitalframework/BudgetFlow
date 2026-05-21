@@ -6,9 +6,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import data.Category
-import data.Transaction
-
+import com.banking.shared.data.Category
+import com.banking.shared.data.Transaction
 @Composable
 fun SummaryCards(
     transactions: List<Transaction>,

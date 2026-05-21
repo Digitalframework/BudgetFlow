@@ -3,6 +3,8 @@ package data
 import com.banking.shared.data.Transaction
 import kotlinx.coroutines.flow.Flow
 
+
+
 /**
  * Repository interface for transaction data operations.
  * Platform-specific implementations provided in androidMain and iosMain.
@@ -88,4 +90,20 @@ expect class TransactionDocument {
     companion object {
         fun fromTransaction(transaction: Transaction): TransactionDocument
     }
+    
+    constructor(
+        _id: String,
+        id: String,
+        date: String,
+        description: String,
+        amount: Double,
+        category: String,
+        rawLine: String,
+        createdAt: Long,
+        updatedAt: Long
+    )
 }
+
+// Factory function is platform-specific due to different dependencies:
+// - Android: fun createTransactionRepository(context: Context): TransactionRepo
+// - iOS: fun createTransactionRepository(): TransactionRepo

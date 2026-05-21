@@ -1,6 +1,7 @@
 package data
 
 import android.content.Context
+import com.banking.shared.data.Transaction
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -80,11 +81,4 @@ class MongoDbAndroid(context: Context) : TransactionRepo {
         }
         return flow.asStateFlow()
     }
-}
-
-/**
- * Factory function to create repository for Android.
- */
-fun createTransactionRepository(context: Context): TransactionRepo {
-    return MongoDbAndroid(context)
 }

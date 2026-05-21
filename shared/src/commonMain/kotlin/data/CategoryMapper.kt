@@ -8,6 +8,11 @@ class CategoryMapper private constructor() {
 
     companion object {
         val shared: CategoryMapper = CategoryMapper()
+        
+        /**
+         * Get all categories as a list (static accessor).
+         */
+        fun getAllCategories(): List<Category> = shared.getAllCategories()
     }
 
     val CATEGORIES = mapOf(

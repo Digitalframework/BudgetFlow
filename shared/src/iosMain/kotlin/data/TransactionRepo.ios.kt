@@ -1,10 +1,12 @@
 package data
 
 import com.banking.shared.data.Transaction
+import kotlin.time.ExperimentalTime
 
 /**
  * iOS implementation of TransactionDocument.
  */
+@OptIn(ExperimentalTime::class)
 actual class TransactionDocument actual constructor(
     actual val _id: String,
     actual val id: String,

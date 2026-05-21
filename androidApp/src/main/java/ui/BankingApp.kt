@@ -12,8 +12,8 @@ import com.banking.app.ui.components.SummaryCards
 import com.banking.app.ui.components.TransactionTable
 import com.banking.app.ui.components.UploadPanel
 import com.banking.app.ui.components.CategoryBreakdown
-import data.TransactionFilter
 import viewmodel.TransactionViewModel
+import com.banking.shared.data.CategoryMapper
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,7 +65,7 @@ fun BankingApp(viewModel: TransactionViewModel) {
                 // Summary Cards
                 SummaryCards(
                     transactions = uiState.transactions,
-                    categories = data.CategoryMapper.getAllCategories()
+                    categories = CategoryMapper.getAllCategories()
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -73,7 +73,7 @@ fun BankingApp(viewModel: TransactionViewModel) {
                 // Category Breakdown
                 CategoryBreakdown(
                     transactions = uiState.transactions,
-                    categories = data.CategoryMapper.getAllCategories()
+                    categories = CategoryMapper.getAllCategories()
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -81,7 +81,7 @@ fun BankingApp(viewModel: TransactionViewModel) {
                 // Transaction Table
                 TransactionTable(
                     transactions = uiState.transactions,
-                    categories = data.CategoryMapper.getAllCategories(),
+                    categories = CategoryMapper.getAllCategories(),
                     onCategoryChange = { id, category ->
                         viewModel.updateCategory(id, category)
                     }
