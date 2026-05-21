@@ -1,5 +1,7 @@
 package data
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -15,6 +17,7 @@ actual fun getPlatform(): Platform = AndroidPlatform()
 actual fun currentTimeMillis(): Long = System.currentTimeMillis()
 
 actual class DateParser actual constructor() {
+    @RequiresApi(Build.VERSION_CODES.O)
     actual fun parseDateStr(raw: String): String? {
         val match = Regex("""(\d{2})\.(\d{2})\.(\d{2,4})?""").find(raw) ?: return null
         val (_, dd, mm, yyyy) = match.destructured

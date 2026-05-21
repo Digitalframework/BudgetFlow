@@ -5,6 +5,7 @@ import platform.Foundation.NSDateFormatter
 import platform.Foundation.NSTimeZone
 import platform.Foundation.timeIntervalSince1970
 import platform.Foundation.dateWithTimeIntervalSince1970
+import platform.Foundation.timeZoneWithName
 
 class IosPlatform : Platform {
     override val name: String = "iOS"
@@ -20,7 +21,7 @@ actual fun currentTimeMillis(): Long {
 
 actual class DateParser actual constructor() {
     private val formatter = NSDateFormatter().apply {
-        timeZone = NSTimeZone.timeZoneWithName("UTC")
+        timeZone = NSTimeZone.timeZoneWithName("UTC")!!
     }
     
     actual fun parseDateStr(raw: String): String? {
@@ -40,7 +41,7 @@ actual class DateParser actual constructor() {
                 val date = formatter.dateFromString(raw)
                 if (date != null) {
                     formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
-                    formatter.timeZone = NSTimeZone.timeZoneWithName("UTC")
+                    formatter.timeZone = NSTimeZone.timeZoneWithName("UTC")!!
                     return formatter.stringFromDate(date)
                 }
             }
