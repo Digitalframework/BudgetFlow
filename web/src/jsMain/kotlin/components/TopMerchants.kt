@@ -6,7 +6,6 @@ import com.banking.shared.data.Category
 import com.banking.shared.data.Transaction
 import design.T
 import design.fmtEur
-import design.fmtPct
 import react.FC
 import react.Fragment
 import react.Props
@@ -19,44 +18,50 @@ import web.cssom.ClassName
 import web.cssom.Color
 import web.cssom.pct
 
+private const val LIMIT = 7
+
+private val NOISE = Regex(
+  """\b(gmbh|ag|kg|e\.?k\.?|co\.?kg|n\.?v\.?|sagt danke|bedankt sich)\b""",
+  RegexOption.IGNORE_CASE,
+)
+
+private fun normalize(description: String): String =
+  description
+    .replace(NOISE, "")
+    .replace(Regex("""\s+"""), " ")
+    .trim()
+
 /**
- * Ranked magnitude chart: one series (spend), so every bar gets one hue.
- * The category swatch beside each label carries identity, the label carries the
- * name — colour is never the only channel.
+ * Which merchants the money actually goes to — the question the category chart
+ * can't answer. Single series, so one hue for every bar.
  */
-external interface CategoryBreakdownProps : Props {
+external interface TopMerchantsProps : Props {
   var transactions: List<Transaction>
   var categories: List<Category>
-  var activeCategory: String?
-  var onSelectCategory: ((String) -> Unit)?
+  var onSelectMerchant: ((String) -> Unit)?
 }
 
-@JsName("CategoryBreakdown")
-val CategoryBreakdown: FC<CategoryBreakdownProps> = FC { props ->
-  val active = props.activeCategory ?: "all"
-
+@JsName("TopMerchants")
+val TopMerchants: FC<TopMerchantsProps> = FC { props ->
   val rows = props.transactions
-    .groupBy { it.category }
-    .map { (key, list) ->
-      val category = props.categories.find { it.name == key }
-      CategoryRow(
-        key = key,
+    .groupBy { normalize(it.description).ifEmpty { "Unbekannt" } }
+    .map { (name, list) ->
+      MerchantRow(
+        name = name,
         total = list.sumOf { it.amount },
         count = list.size,
-        label = category?.label ?: key,
-        color = category?.color ?: T.textMuted,
+        category = list.first().category,
       )
     }
     .sortedByDescending { it.total }
+    .take(LIMIT)
 
-  val sum = rows.sumOf { it.total }
   val max = rows.firstOrNull()?.total ?: 1.0
 
   Panel {
-    title = "Ausgaben nach Kategorie"
-    extra = if (rows.isNotEmpty()) {
-      "${rows.size} von ${props.categories.size} Kategorien · ${fmtEur(sum)}"
-    } else null
+    title = "Top-Empfänger"
+    extra = if (rows.isNotEmpty()) "Top ${rows.size}" else null
+    style = jso { height = 100.pct }
 
     children = Fragment.create {
       if (rows.isEmpty()) {
@@ -67,35 +72,33 @@ val CategoryBreakdown: FC<CategoryBreakdownProps> = FC { props ->
         }
       } else {
         rows.forEach { row ->
-          val share = if (sum != 0.0) row.total / sum else 0.0
-          val isActive = active == row.key
+          val category = props.categories.find { it.name == row.category }
 
           Tooltip {
-            key = row.key
+            key = row.name
             placement = "topRight"
-            title = "${row.count} ${if (row.count == 1) "Buchung" else "Buchungen"} · " +
-              "Ø ${fmtEur(row.total / row.count)}"
+            title = "${row.count} × · Ø ${fmtEur(row.total / row.count)} · " +
+              (category?.label ?: row.category)
             children = button.create {
               asDynamic().type = "button"
               className = ClassName("bar-row")
-              asDynamic()["aria-pressed"] = isActive
-              onClick = { props.onSelectCategory?.invoke(if (isActive) "all" else row.key) }
+              onClick = { props.onSelectMerchant?.invoke(row.name) }
 
               div {
                 className = ClassName("bar-row__top")
                 span {
                   className = ClassName("cat-dot")
-                  style = jso { background = Color(row.color) }
+                  style = jso { background = Color(category?.color ?: T.textMuted) }
                 }
                 span {
                   className = ClassName("bar-row__name")
-                  +row.label
+                  +row.name
                 }
                 span {
                   className = ClassName("bar-row__meta")
                   span {
                     className = ClassName("bar-row__share")
-                    +fmtPct(share)
+                    +"${row.count} ×"
                   }
                   span {
                     className = ClassName("bar-row__value")
@@ -110,8 +113,6 @@ val CategoryBreakdown: FC<CategoryBreakdownProps> = FC { props ->
                   style = jso {
                     width = ((row.total / max) * 100).pct
                     background = Color(T.accent)
-                    opacity = (if (isActive || active == "all") 1.0 else 0.4)
-                      .unsafeCast<web.cssom.Opacity>()
                   }
                 }
               }
@@ -123,10 +124,9 @@ val CategoryBreakdown: FC<CategoryBreakdownProps> = FC { props ->
   }
 }
 
-private data class CategoryRow(
-  val key: String,
+private data class MerchantRow(
+  val name: String,
   val total: Double,
   val count: Int,
-  val label: String,
-  val color: String,
+  val category: String,
 )

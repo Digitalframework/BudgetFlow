@@ -1,95 +1,106 @@
 package components
 
+import antd.Button
+import antd.ButtonTypePrimary
+import antd.CloudUploadOutlined
+import antd.FilePdfOutlined
 import antd.Upload
-import web.cssom.*
-import utils.jso
-import web.file.File
+import antd.UploadProps
+import design.T
 import react.FC
 import react.Fragment
 import react.Props
 import react.create
+import react.dom.html.ReactHTML.br
 import react.dom.html.ReactHTML.div
-import react.dom.html.ReactHTML.p
+import utils.jso
+import web.cssom.ClassName
+import web.cssom.Color
+import web.cssom.FontWeight
+import web.cssom.TextAlign
+import web.cssom.px
+import web.file.File
 
 external interface UploadPanelProps : Props {
-    var onUpload: (File) -> Unit
+  var onUpload: (File) -> Unit
+  var compact: Boolean?
 }
 
+private fun UploadProps.applyDraggerProps(onUpload: (File) -> Unit) {
+  accept = ".pdf"
+  multiple = true
+  showUploadList = false
+  beforeUpload = { file, _ ->
+    onUpload(file)
+    false
+  }
+}
+
+/**
+ * `compact` renders just the import button for the header; the full dropzone is
+ * the empty state, so it stops eating half the screen once data exists.
+ */
 @JsName("UploadPanel")
 val UploadPanel: FC<UploadPanelProps> = FC { props ->
-    // 1. Replaces <Card> with a standard div styled exactly like the card
-    div {
-        style = jso {
-            borderRadius = 16.px
-            marginBottom = 24.px
-            //border = "2px dashed #1677FF"
-            borderRadius = 2.px
-            background = Color("#111127")
-            overflow = Overflow.hidden // Keeps the dragger inside the rounded corners
+  if (props.compact == true) {
+    Upload {
+      applyDraggerProps(props.onUpload)
+      children = Fragment.create {
+        Button {
+          icon = CloudUploadOutlined.create()
+          children = Fragment.create { +"PDF importieren" }
         }
-
-        Upload {
-            // Force it into Dragger mode safely bypassing strict enum types
-            asDynamic().type = "drag"
-            name = "file"
-            accept = ".pdf"
-            multiple = false
-            showUploadList = false
-            style = jso {
-                background = Color("transparent")
-                border = "none"
-            }
-            beforeUpload = { file, _ ->
-                props.onUpload(file)
-                false
-            }
-
-            // 2. Pure HTML elements inside Fragment to prevent "invoke" DSL errors
-            children = Fragment.create {
-                div {
-                    style = jso {
-                        padding = 32.px
-                        textAlign = "center".unsafeCast<TextAlign>()
-                    }
-                    p {
-                        style = jso {
-                            fontSize = 48.px
-                            margin = 0.px
-                        }
-                        +"📄"
-                    }
-                    p {
-                        style = jso {
-                            fontSize = 16.px
-                            fontWeight = 600.unsafeCast<FontWeight>()
-                            color = Color("#1677FF")
-                            margin = "8px 0".unsafeCast<Margin>()
-                        }
-                        +"Kontoauszug PDF hier ablegen"
-                    }
-                    p {
-                        style = jso {
-                            fontSize = 13.px
-                            color = Color("#888888")
-                            marginBottom = 16.px
-                        }
-                        +"Sparkasse, ING, DKB, Commerzbank, Volksbank & mehr"
-                    }
-                    // Replaces the AntD <Button> with a beautifully styled div
-                    div {
-                        style = jso {
-                            display = Display.inlineBlock
-                            background = Color("#1677FF")
-                            color = Color("#FFFFFF")
-                            padding = "8px 16px".unsafeCast<Padding>()
-                            borderRadius = 8.px
-                            fontWeight = 500.unsafeCast<FontWeight>()
-                            cursor = Cursor.pointer
-                        }
-                        +"☁️ PDF auswählen"
-                    }
-                }
-            }
-        }
+      }
     }
+  } else {
+    div {
+      className = ClassName("dropzone")
+      style = jso {
+        maxWidth = 520.px
+        margin = "8vh auto 0".unsafeCast<web.cssom.Margin>()
+      }
+
+      Upload.Dragger {
+        applyDraggerProps(props.onUpload)
+        children = Fragment.create {
+          div {
+            style = jso { padding = "26px 16px".unsafeCast<web.cssom.Padding>() }
+
+            div {
+              style = jso {
+                fontSize = 34.px
+                color = Color(T.accent)
+                marginBottom = 14.px
+              }
+              FilePdfOutlined {}
+            }
+            div {
+              style = jso {
+                fontSize = 16.px
+                fontWeight = 600.unsafeCast<FontWeight>()
+                color = Color(T.text)
+              }
+              +"Kontoauszug als PDF hier ablegen"
+            }
+            div {
+              style = jso {
+                color = Color(T.textMuted)
+                fontSize = 13.px
+                margin = "6px 0 18px".unsafeCast<web.cssom.Margin>()
+                textAlign = TextAlign.center
+              }
+              +"Sparkasse, ING, DKB, Commerzbank, Volksbank & mehr."
+              br {}
+              +"Die Auswertung passiert lokal im Browser."
+            }
+            Button {
+              type = ButtonTypePrimary
+              icon = CloudUploadOutlined.create()
+              children = Fragment.create { +"PDF auswählen" }
+            }
+          }
+        }
+      }
+    }
+  }
 }

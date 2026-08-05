@@ -31,16 +31,68 @@ external val Layout: LayoutComponent
 
 external interface SiderProps : Props {
     var theme: String?
-    var width: Number?
+    var width: dynamic
     var collapsed: Boolean?
     var collapsible: Boolean?
-    var collapsedWidth: Number?
+    var collapsedWidth: dynamic
     var onCollapse: ((collapsed: Boolean, type: String) -> Unit)?
+    var trigger: dynamic
+    var breakpoint: String?
     var style: dynamic
     var className: String?
     var children: dynamic
     var onClick: MouseEventHandler<HTMLElement>?
 }
+
+// ==================== Grid ====================
+
+external interface RowProps : Props {
+    var gutter: dynamic
+    var align: String?
+    var justify: String?
+    var wrap: Boolean?
+    var style: dynamic
+    var className: String?
+    var children: dynamic
+}
+
+external val Row: FC<RowProps>
+
+external interface ColProps : Props {
+    var span: dynamic
+    var offset: dynamic
+    var flex: dynamic
+    var xs: dynamic
+    var sm: dynamic
+    var md: dynamic
+    var lg: dynamic
+    var xl: dynamic
+    var xxl: dynamic
+    var style: dynamic
+    var className: String?
+    var children: dynamic
+}
+
+external val Col: FC<ColProps>
+
+// ==================== ConfigProvider / theme ====================
+
+external interface ConfigProviderProps : Props {
+    var theme: dynamic
+    var locale: dynamic
+    var componentSize: String?
+    var children: dynamic
+}
+
+external val ConfigProvider: FC<ConfigProviderProps>
+
+external interface ThemeObject {
+    val defaultAlgorithm: dynamic
+    val darkAlgorithm: dynamic
+    val compactAlgorithm: dynamic
+}
+
+external val theme: ThemeObject
 
 external interface HeaderProps : Props {
     var style: dynamic
@@ -119,7 +171,37 @@ external interface TableProps : Props {
     var locale: dynamic
 }
 
-external val Table: FC<TableProps>
+external interface TableSummaryProps : Props {
+    var fixed: dynamic
+    var children: dynamic
+}
+
+external interface TableSummaryRowProps : Props {
+    var children: dynamic
+    var style: dynamic
+    var className: String?
+}
+
+external interface TableSummaryCellProps : Props {
+    var index: Number
+    var colSpan: Number?
+    var rowSpan: Number?
+    var align: String?
+    var children: dynamic
+    var style: dynamic
+    var className: String?
+}
+
+external interface TableSummaryComponent : FC<TableSummaryProps> {
+    val Row: FC<TableSummaryRowProps>
+    val Cell: FC<TableSummaryCellProps>
+}
+
+external interface TableComponent : FC<TableProps> {
+    val Summary: TableSummaryComponent
+}
+
+external val Table: TableComponent
 
 // ==================== Input ====================
 
@@ -181,6 +263,7 @@ external interface TableColumnProps {
     var fixed: String?
     var sorter: dynamic
     var sortOrder: dynamic
+    var defaultSortOrder: String?
     var sortDirections: dynamic
     var filters: dynamic
     var onFilter: dynamic
@@ -217,6 +300,10 @@ external interface SelectProps : Props {
     var notFoundContent: dynamic
     var dropdownStyle: dynamic
     var popupMatchSelectWidth: Boolean?
+    var defaultOpen: Boolean?
+    var autoFocus: Boolean?
+    var onBlur: dynamic
+    var variant: String?
 }
 
 external val Select: FC<SelectProps>
@@ -243,7 +330,11 @@ external interface UploadProps : Props {
     var customRequest: dynamic
 }
 
-external val Upload: FC<UploadProps>
+external interface UploadComponent : FC<UploadProps> {
+    val Dragger: FC<UploadProps>
+}
+
+external val Upload: UploadComponent
 
 // ==================== Modal ====================
 
@@ -381,6 +472,8 @@ external interface TooltipProps : Props {
     var className: String?
     var overlayStyle: dynamic
     var trigger: dynamic
+    var mouseEnterDelay: Number?
+    var arrow: dynamic
 }
 
 external val Tooltip: FC<TooltipProps>

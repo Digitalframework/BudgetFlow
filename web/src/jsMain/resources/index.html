@@ -6,134 +6,331 @@
     <title>Banking App - KontoAnalyse</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg: #0e0e11;
+            --surface: #17171b;
+            --surface-alt: #1d1d23;
+            --surface-hover: #23232a;
+            --border: rgba(255, 255, 255, 0.07);
+            --border-strong: rgba(255, 255, 255, 0.16);
+            --text: #f4f4f3;
+            --text-secondary: #a9a8a2;
+            --text-muted: #77766f;
+            --accent: #3987e5;
+            --track: #24242b;
+            --mono: "DM Mono", ui-monospace, SFMono-Regular, monospace;
+        }
+
         * {
-            margin: 0;
-            padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #0d0d1a;
-            color: #dddddd;
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        #root {
             min-height: 100vh;
+        }
+
+        /* ── Scrollbars ───────────────────────────────────────────────────── */
+        *::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        *::-webkit-scrollbar-thumb {
+            background: #2c2c33;
+            border-radius: 99px;
+            border: 3px solid var(--bg);
+        }
+        *::-webkit-scrollbar-thumb:hover {
+            background: #3a3a44;
+        }
+        *::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        /* ── Layout chrome ────────────────────────────────────────────────── */
+        .app-sider {
+            border-right: 1px solid var(--border);
+        }
+        .app-header {
+            border-bottom: 1px solid var(--border);
+        }
+        .ant-layout-sider-trigger {
+            background: var(--surface) !important;
+            border-top: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            color: var(--text-muted) !important;
+        }
+
+        /* ── Panel (card) ─────────────────────────────────────────────────── */
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+        }
+        .panel-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 16px 18px 0;
+        }
+        .panel-title {
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            color: var(--text);
+            margin: 0;
+        }
+        .panel-sub {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .panel-body {
+            padding: 14px 18px 18px;
+        }
+
+        /* ── Stat tile ────────────────────────────────────────────────────── */
+        .tile-label {
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+        .tile-value {
+            font-size: 26px;
+            font-weight: 600;
+            line-height: 1.15;
+            color: var(--text);
+            margin-top: 6px;
+        }
+        .tile-hint {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* ── Ranked bar rows ──────────────────────────────────────────────── */
+        .bar-row {
+            display: block;
+            width: calc(100% + 20px);
+            text-align: left;
+            background: none;
+            border: 0;
+            padding: 9px 10px;
+            margin: 0 -10px;
+            border-radius: 10px;
+            cursor: pointer;
+            font: inherit;
+            color: inherit;
+            transition: background 0.12s ease;
+        }
+        .bar-row:hover {
+            background: var(--surface-alt);
+        }
+        .bar-row[aria-pressed="true"] {
+            background: var(--surface-alt);
+        }
+        .bar-row__top {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 7px;
+        }
+        .bar-row__name {
+            font-size: 13px;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .bar-row__meta {
+            margin-left: auto;
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            flex: none;
+        }
+        .bar-row__share {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-variant-numeric: tabular-nums;
+        }
+        .bar-row__value {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            font-family: var(--mono);
+            font-variant-numeric: tabular-nums;
+        }
+        .bar-track {
+            height: 6px;
+            border-radius: 4px;
+            background: var(--track);
             overflow: hidden;
         }
-        
-        #root {
-            width: 100%;
-            height: 100vh;
-        }
-        
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: #1a1a2e;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: #333333;
+        .bar-fill {
+            height: 100%;
             border-radius: 4px;
+            min-width: 3px;
+            transition: width 0.35s cubic-bezier(0.25, 1, 0.5, 1);
         }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: #444444;
+
+        .cat-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 3px;
+            flex: none;
         }
-        
-        /* Ant Design dark theme overrides */
-        .ant-layout-sider-trigger {
-            background: #1a1a2e !important;
+
+        /* ── Month columns ────────────────────────────────────────────────── */
+        .month-col {
+            flex: 1 1 0;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            background: none;
+            border: 0;
+            padding: 0;
+            cursor: pointer;
+            font: inherit;
         }
-        
-        .ant-table-wrapper .ant-table {
-            background: #111127 !important;
-            color: #ddd !important;
+        .month-col__bar {
+            width: 100%;
+            max-width: 46px;
+            background: var(--accent);
+            border-radius: 4px 4px 0 0;
+            min-height: 3px;
+            transition:
+                height 0.35s cubic-bezier(0.25, 1, 0.5, 1),
+                opacity 0.12s ease;
         }
-        
-        .ant-table-wrapper .ant-table-thead > tr > th {
-            background: #1a1a2e !important;
-            color: #888 !important;
-            border-bottom: 1px solid #333 !important;
+        .month-col:hover .month-col__bar {
+            opacity: 0.82;
+        }
+        .month-col__label {
             font-size: 11px;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+        .month-col[aria-pressed="true"] .month-col__label {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        /* ── Sidebar filter list ──────────────────────────────────────────── */
+        .filter-label {
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.07em;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 8px;
         }
-        
+        .cat-item {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            width: 100%;
+            padding: 7px 10px;
+            border: 0;
+            border-radius: 8px;
+            background: none;
+            cursor: pointer;
+            font: inherit;
+            color: var(--text-secondary);
+            transition: background 0.12s ease;
+        }
+        .cat-item:hover {
+            background: var(--surface-alt);
+            color: var(--text);
+        }
+        .cat-item.is-active {
+            background: var(--surface-hover);
+            color: var(--text);
+        }
+        .cat-item__name {
+            font-size: 13px;
+            text-align: left;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .cat-item__count {
+            font-size: 11px;
+            font-variant-numeric: tabular-nums;
+            color: var(--text-muted);
+            background: var(--track);
+            border-radius: 99px;
+            padding: 1px 7px;
+            flex: none;
+        }
+        .cat-item.is-active .cat-item__count {
+            color: var(--text);
+        }
+
+        /* ── Table ────────────────────────────────────────────────────────── */
+        .ant-table-wrapper .ant-table {
+            background: transparent;
+        }
+        .ant-table-wrapper .ant-table-thead > tr > th {
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
         .ant-table-wrapper .ant-table-tbody > tr > td {
-            border-bottom: 1px solid #1a1a2e !important;
+            border-bottom: 1px solid var(--border);
         }
-        
-        .ant-table-wrapper .ant-table-tbody > tr:hover > td {
-            background: #1a1a2e !important;
+        .ant-table-wrapper .ant-table-cell::before {
+            display: none !important;
         }
-        
-        .ant-card {
-            background: #111127 !important;
-            border-color: #222 !important;
+        .tx-cat {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 3px 9px 3px 7px;
+            border-radius: 99px;
+            background: var(--surface-alt);
+            border: 1px solid var(--border);
+            font-size: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: background 0.12s ease;
         }
-        
-        .ant-card .ant-card-head {
-            background: #111127 !important;
-            border-color: #222 !important;
-            color: #ddd !important;
+        .tx-cat:hover {
+            background: var(--surface-hover);
+            color: var(--text);
         }
-        
-        .ant-statistic-title {
-            color: #888 !important;
+
+        /* ── Dropzone ─────────────────────────────────────────────────────── */
+        .dropzone .ant-upload-drag {
+            background: var(--surface) !important;
+            border: 1px dashed var(--border-strong) !important;
+            border-radius: 16px !important;
+            transition: border-color 0.15s ease, background 0.15s ease;
         }
-        
-        .ant-segmented {
-            background: #1a1a2e !important;
+        .dropzone .ant-upload-drag:hover,
+        .dropzone .ant-upload-drag-hover {
+            border-color: var(--accent) !important;
+            background: var(--surface-alt) !important;
         }
-        
-        .ant-segmented-item-selected {
-            background: #1677ff !important;
-            color: #fff !important;
-        }
-        
-        .ant-upload-drag {
-            background: transparent !important;
-        }
-        
-        .ant-select-selector {
-            background: #1a1a2e !important;
-            border-color: #333 !important;
-            color: #ddd !important;
-        }
-        
-        .ant-select-dropdown {
-            background: #1a1a2e !important;
-        }
-        
-        .ant-select-item {
-            color: #ddd !important;
-        }
-        
-        .ant-select-item:hover,
-        .ant-select-item-option-selected {
-            background: #262640 !important;
-        }
-        
-        .ant-modal-content {
-            background: #1a1a2e !important;
-        }
-        
-        .ant-modal-header {
-            background: #1a1a2e !important;
-        }
-        
-        .ant-modal-title {
-            color: #fff !important;
-        }
-        
-        .ant-modal-body {
-            color: #ddd !important;
+
+        .ant-progress-text {
+            display: none;
         }
     </style>
 </head>

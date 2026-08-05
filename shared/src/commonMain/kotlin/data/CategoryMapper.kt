@@ -19,17 +19,18 @@ class CategoryMapper private constructor() {
         "Lebensmittel" to Category(
             name = "Lebensmittel",
             label = "Lebensmittel",
-            color = "#52c41a",
+            color = "#199e70",
             icon = "🛒",
             keywords = listOf(
                 "edeka", "rewe", "kaufland", "erdimili", "lidl", "aldi",
-                "netto", "penny", "Baeckerei", "Backstube", "Gercek Supermarket"
+                "netto", "penny", "Baeckerei", "Backstube", "Gercek Supermarket",
+                "picnic", "kaisermarkt", "hepsi", "zurheide"
             )
         ),
         "Drogerie" to Category(
             name = "Drogerie",
             label = "Drogerie / Pflege",
-            color = "#13c2c2",
+            color = "#19a2b8",
             icon = "🧴",
             keywords = listOf(
                 "apotheke", "dm ", " dm", "rossmann", "mueller", "müller",
@@ -39,26 +40,31 @@ class CategoryMapper private constructor() {
         "Ausgehen" to Category(
             name = "Ausgehen",
             label = "Ausgehen",
-            color = "#fa8c16",
+            color = "#d95926",
             icon = "🍽️",
+            // "eis" alone also matches "Freisinger Bank" – keep it specific
             keywords = listOf(
-                "grill", "restaurant", "eis", "caffe", "café", "cafe", "cafe",
-                "pizz", "burger", "döner"
+                "grill", "restaurant", "eisdiele", "eiscafe", "eiscafé", "caffe",
+                "café", "cafe", "pizz", "burger", "döner", "doner", "kebab",
+                "imbiss", "mcdonald", "kfc", "subway"
             )
         ),
         "Versicherungen" to Category(
             name = "Versicherungen",
             label = "Versicherungen / GEZ / Steuern",
-            color = "#722ed1",
+            color = "#9085e9",
             icon = "🛡️",
             keywords = listOf(
-                "arag", "adac", "gez", "rundfunk", "beitrag", "finanzamt", "steuer"
+                "arag", "adac", "gez", "rundfunk", "beitrag", "finanzamt", "steuer",
+                "versicherung", "concordia", "allianz", "huk", "ergo ", "axa",
+                "debeka", "gothaer", "provinzial", "signal iduna", "devk", "generali",
+                "aok", "barmer", "krankenkasse", "gesundheitskasse", "gesundheits kasse"
             )
         ),
         "Sport" to Category(
             name = "Sport",
             label = "Sport / Freizeit",
-            color = "#eb2f96",
+            color = "#d55181",
             icon = "🏋️",
             keywords = listOf(
                 "rosa", "fitx", "mcfit", "rsg", "fitnessstudio", "sport",
@@ -68,34 +74,37 @@ class CategoryMapper private constructor() {
         "Tanken" to Category(
             name = "Tanken",
             label = "Tanken",
-            color = "#fa541c",
+            color = "#e66767",
             icon = "⛽",
             keywords = listOf("jet ", "aral", "total ", "shell", "esso", "tankstelle", "bp ")
         ),
         "Fixkosten" to Category(
             name = "Fixkosten",
             label = "Fix-Kosten",
-            color = "#1677ff",
+            color = "#3987e5",
             icon = "🏠",
             keywords = listOf(
                 "vodafone", "telekom", "miete", "möbius", "mobius", "congstar",
-                "strom", "gas", "wasser", "internet", "lekker energie"
+                "strom", "gas", "wasser", "internet", "lekker energie",
+                "drillisch", "rheinenergie"
             )
         ),
         "Einkaufen" to Category(
             name = "Einkaufen",
             label = "Einkaufen",
-            color = "#d4b106",
+            color = "#c98500",
             icon = "🛍️",
             keywords = listOf(
                 "galeria", "galaeria", "jack & jones", "jack and jones", "reserved",
-                "h&m", "saturn", "media markt", "mediamarkt", "zara", "primark", "c&a"
+                "h&m", "saturn", "media markt", "mediamarkt", "zara", "primark", "c&a",
+                "h+m", "tkmaxx", "tk maxx", "miniso", "sostrene", "amazon",
+                "vero moda", "etsy", "klarna"
             )
         ),
         "Sonstiges" to Category(
             name = "Sonstiges",
             label = "Sonstiges",
-            color = "#8c8c8c",
+            color = "#7b7a74",
             icon = "❓",
             keywords = emptyList()
         )
