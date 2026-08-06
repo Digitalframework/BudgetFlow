@@ -8,6 +8,7 @@ import kotlinx.browser.window
 private const val STORAGE_KEY_TRANSACTIONS = "banking_transactions"
 private const val STORAGE_KEY_FILTER = "banking_filter"
 private const val STORAGE_KEY_PDF_NAME = "banking_pdf_filename"
+private const val STORAGE_KEY_BUDGETS = "banking_budgets"
 
 class WebStore {
 
@@ -15,6 +16,9 @@ class WebStore {
     private var loading: Boolean = false
     private var filter: TransactionFilter = TransactionFilter()
     private var pdfFileName: String? = null
+
+    /** Monthly spending limit per category name. A missing key means "not set yet". */
+    private var budgets: MutableMap<String, Double> = mutableMapOf()
 
     private val listeners: MutableList<() -> Unit> = mutableListOf()
 
@@ -32,6 +36,17 @@ class WebStore {
     fun isLoading(): Boolean = loading
     fun getFilter(): TransactionFilter = filter
     fun getPdfFileName(): String? = pdfFileName
+    fun getBudgets(): Map<String, Double> = budgets.toMap()
+
+    /** Passing a null or non-positive limit clears the budget for that category. */
+    fun setBudget(category: String, limit: Double?) {
+        if (limit == null || limit <= 0.0) {
+            budgets.remove(category)
+        } else {
+            budgets[category] = limit
+        }
+        notifyListeners()
+    }
 
     fun setLoading(isLoading: Boolean) {
         loading = isLoading
@@ -82,6 +97,11 @@ class WebStore {
                 filter = parseFilter(savedFilter)
             }
 
+            val savedBudgets = localStorage.getItem(STORAGE_KEY_BUDGETS)
+            if (savedBudgets != null) {
+                budgets = parseBudgets(savedBudgets).toMutableMap()
+            }
+
             pdfFileName = localStorage.getItem(STORAGE_KEY_PDF_NAME)
         } catch (e: Exception) {
             //window.console.error("Error loading persisted data: ${e.message}")
@@ -93,6 +113,7 @@ class WebStore {
         try {
             localStorage.setItem(STORAGE_KEY_TRANSACTIONS, serializeTransactions(transactions))
             localStorage.setItem(STORAGE_KEY_FILTER, serializeFilter(filter))
+            localStorage.setItem(STORAGE_KEY_BUDGETS, serializeBudgets(budgets))
             if (pdfFileName != null) {
                 localStorage.setItem(STORAGE_KEY_PDF_NAME, pdfFileName!!)
             } else {
@@ -139,6 +160,26 @@ class WebStore {
         val month = Regex(""""month":"([^"]+)"""").find(json)?.groupValues?.get(1)
         val search = Regex(""""search":"([^"]*)"""").find(json)?.groupValues?.get(1) ?: ""
         return TransactionFilter(category, month, search)
+    }
+
+    private fun serializeBudgets(budgets: Map<String, Double>): String {
+        val items = budgets.map { (category, limit) ->
+            """{"category":"${category.escapeJson()}","limit":$limit}"""
+        }
+        return buildJsonArray(items)
+    }
+
+    private fun parseBudgets(json: String): Map<String, Double> {
+        val result = mutableMapOf<String, Double>()
+        Regex("""\{[^}]+\}""").findAll(json).forEach { match ->
+            val obj = match.value
+            val category = Regex(""""category":"([^"]+)"""").find(obj)?.groupValues?.get(1) ?: ""
+            val limit = Regex(""""limit":(-?[0-9.]+)""").find(obj)?.groupValues?.get(1)?.toDoubleOrNull()
+            if (category.isNotEmpty() && limit != null && limit > 0.0) {
+                result[category] = limit
+            }
+        }
+        return result
     }
 
     private fun String.escapeJson(): String {

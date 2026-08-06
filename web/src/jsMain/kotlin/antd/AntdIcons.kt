@@ -35,3 +35,12 @@ external val CloudUploadOutlined: FC<Props>
 
 @JsName("FilePdfOutlined")
 external val FilePdfOutlined: FC<Props>
+
+@JsName("WalletOutlined")
+external val WalletOutlined: FC<Props>
+
+@JsName("ArrowLeftOutlined")
+external val ArrowLeftOutlined: FC<Props>
+
+@JsName("RightOutlined")
+external val RightOutlined: FC<Props>

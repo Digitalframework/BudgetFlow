@@ -62,6 +62,7 @@ val BankingApp: FC<Props> = FC {
   var transactions by useState<List<Transaction>>(emptyList())
   var loading by useState(false)
   var filter by useState(TransactionFilter())
+  var budgets by useState<Map<String, Double>>(emptyMap())
   var view by useState("overview")
   var collapsed by useState(false)
   var showClearDialog by useState(false)
@@ -73,11 +74,13 @@ val BankingApp: FC<Props> = FC {
     store.loadPersistedData()
     transactions = store.getTransactions()
     filter = store.getFilter()
+    budgets = store.getBudgets()
 
     val unsubscribe = store.subscribe {
       transactions = store.getTransactions()
       loading = store.isLoading()
       filter = store.getFilter()
+      budgets = store.getBudgets()
     }
 
     try {
@@ -237,7 +240,11 @@ val BankingApp: FC<Props> = FC {
                       fontWeight = 600.unsafeCast<FontWeight>()
                       color = Color(T.text)
                     }
-                    +(if (view == "overview") "Übersicht" else "Buchungen")
+                    +when (view) {
+                      "overview" -> "Übersicht"
+                      "budgets" -> "Budgets"
+                      else -> "Buchungen"
+                    }
                   }
                   div {
                     style = jso {
@@ -247,7 +254,13 @@ val BankingApp: FC<Props> = FC {
                       overflow = Overflow.hidden
                       textOverflow = TextOverflow.ellipsis
                     }
-                    +(if (hasData) "${filteredTx.size} Buchungen · $subtitle" else "Noch keine Daten")
+                    +when {
+                      !hasData -> "Noch keine Daten"
+                      view == "budgets" ->
+                        "${budgets.size} ${if (budgets.size == 1) "Budget" else "Budgets"} · " +
+                          (if (filter.month != null) fmtMonth(filter.month) else "Neuester Monat")
+                      else -> "${filteredTx.size} Buchungen · $subtitle"
+                    }
                   }
                 }
               }
@@ -266,6 +279,11 @@ val BankingApp: FC<Props> = FC {
                           option.value = "overview"
                           option.label = "Übersicht"
                           option.icon = PieChartOutlined.create()
+                        },
+                        jsObject<dynamic> { option ->
+                          option.value = "budgets"
+                          option.label = "Budgets"
+                          option.icon = WalletOutlined.create()
                         },
                         jsObject<dynamic> { option ->
                           option.value = "table"
@@ -367,6 +385,17 @@ val BankingApp: FC<Props> = FC {
                             }
                           }
                         }
+                      }
+                    }
+                  } else if (view == "budgets") {
+                    BudgetsPage {
+                      this.transactions = transactions
+                      this.categories = categories
+                      this.budgets = budgets
+                      this.month = filter.month
+                      this.onSetBudget = { category, limit ->
+                        store.setBudget(category, limit)
+                        budgets = store.getBudgets()
                       }
                     }
                   } else {

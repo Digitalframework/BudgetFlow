@@ -282,6 +282,153 @@
             color: var(--text);
         }
 
+        /* ── Budgets ──────────────────────────────────────────────────────── */
+        .budget-intro__title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .budget-intro__text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            max-width: 62ch;
+        }
+
+        .budget-card {
+            display: block;
+            width: calc(100% + 20px);
+            text-align: left;
+            background: none;
+            border: 0;
+            padding: 10px;
+            margin: 0 -10px;
+            border-radius: 10px;
+            cursor: pointer;
+            font: inherit;
+            color: inherit;
+            transition: background 0.12s ease;
+        }
+        .budget-card:hover {
+            background: var(--surface-alt);
+        }
+        .budget-card__head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .budget-card__icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 9px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            flex: none;
+        }
+        .budget-card__name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .budget-card__count {
+            font-size: 11px;
+            font-variant-numeric: tabular-nums;
+            color: var(--text-muted);
+            background: var(--track);
+            border-radius: 99px;
+            padding: 1px 7px;
+            flex: none;
+        }
+        .budget-card__chevron {
+            margin-left: auto;
+            color: var(--text-muted);
+            font-size: 12px;
+            flex: none;
+        }
+        .budget-card__unset {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .budget-meter__row {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 7px;
+        }
+        .budget-meter__status {
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .budget-meter__value {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-family: var(--mono);
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+
+        .budget-editor {
+            display: grid;
+            gap: 14px;
+            max-width: 460px;
+        }
+        .budget-presets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .budget-editor__stats {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .budget-editor__actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .budget-tx {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            padding: 7px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .budget-tx:last-child {
+            border-bottom: 0;
+        }
+        .budget-tx__date {
+            font-size: 12px;
+            color: var(--text-muted);
+            width: 62px;
+            flex: none;
+        }
+        .budget-tx__name {
+            font-size: 13px;
+            color: var(--text-secondary);
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .budget-tx__value {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            font-family: var(--mono);
+            font-variant-numeric: tabular-nums;
+            flex: none;
+        }
+
         /* ── Table ────────────────────────────────────────────────────────── */
         .ant-table-wrapper .ant-table {
             background: transparent;
