@@ -5,80 +5,116 @@ import com.banking.shared.data.Transaction
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import org.json.JSONArray
+import org.json.JSONObject
+
+private const val PREFS = "banking_store"
+private const val KEY_TRANSACTIONS = "banking_transactions"
 
 /**
- * MongoDB Realm implementation for Android platform.
- * Uses MongoDB Atlas Device SDK for local persistence and sync.
+ * Local transaction store for Android.
+ *
+ * MongoDB Atlas Device Sync is still the intended backend; until it is wired up
+ * this keeps the data in memory and mirrors it into SharedPreferences, so an
+ * import survives a restart the same way the web app's localStorage copy does.
  */
 class MongoDbAndroid(context: Context) : TransactionRepo {
 
-    // In a real implementation, this would connect to MongoDB
-    // For now, we use in-memory storage
+    private val prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+
     private val _transactions = MutableStateFlow<List<Transaction>>(emptyList())
-    private val transactionMap = mutableMapOf<String, Transaction>()
+    private val transactionMap = linkedMapOf<String, Transaction>()
 
     init {
-        // Load initial data from local storage if available
-        loadAllTransactions()
+        readPersisted().forEach { transactionMap[it.id] = it }
+        publish(persist = false)
     }
 
-    private fun loadAllTransactions() {
+    private fun publish(persist: Boolean = true) {
         _transactions.value = transactionMap.values.toList()
+        if (persist) writePersisted(transactionMap.values)
     }
 
-    override fun getAllTransactions(): Flow<List<Transaction>> {
-        return _transactions.asStateFlow()
-    }
+    override fun getAllTransactions(): Flow<List<Transaction>> = _transactions.asStateFlow()
 
-    override suspend fun getTransactionById(id: String): Transaction? {
-        return transactionMap[id]
-    }
+    override suspend fun getTransactionById(id: String): Transaction? = transactionMap[id]
 
     override suspend fun insertTransaction(transaction: Transaction) {
         transactionMap[transaction.id] = transaction
-        loadAllTransactions()
+        publish()
     }
 
     override suspend fun insertTransactions(transactions: List<Transaction>) {
         transactions.forEach { transactionMap[it.id] = it }
-        loadAllTransactions()
+        publish()
     }
 
     override suspend fun updateCategory(id: String, category: String) {
-        transactionMap[id]?.let {
-            transactionMap[id] = it.copy(category = category)
-        }
-        loadAllTransactions()
+        transactionMap[id]?.let { transactionMap[id] = it.copy(category = category) }
+        publish()
     }
 
     override suspend fun deleteTransaction(id: String) {
         transactionMap.remove(id)
-        loadAllTransactions()
+        publish()
     }
 
     override suspend fun deleteAllTransactions() {
         transactionMap.clear()
-        loadAllTransactions()
+        publish()
     }
 
-    override fun getTransactionsByCategory(category: String): Flow<List<Transaction>> {
-        val flow = MutableStateFlow<List<Transaction>>(emptyList())
-        flow.value = transactionMap.values.filter { it.category == category }
-        return flow.asStateFlow()
-    }
+    override fun getTransactionsByCategory(category: String): Flow<List<Transaction>> =
+        MutableStateFlow(transactionMap.values.filter { it.category == category }).asStateFlow()
 
-    override fun getTransactionsByMonth(yearMonth: String): Flow<List<Transaction>> {
-        val flow = MutableStateFlow<List<Transaction>>(emptyList())
-        flow.value = transactionMap.values.filter { it.date.startsWith(yearMonth) }
-        return flow.asStateFlow()
-    }
+    override fun getTransactionsByMonth(yearMonth: String): Flow<List<Transaction>> =
+        MutableStateFlow(transactionMap.values.filter { it.date.startsWith(yearMonth) }).asStateFlow()
 
-    override fun searchTransactions(query: String): Flow<List<Transaction>> {
-        val flow = MutableStateFlow<List<Transaction>>(emptyList())
-        flow.value = transactionMap.values.filter {
-            it.description.contains(query, ignoreCase = true) ||
-            it.rawLine.contains(query, ignoreCase = true)
+    override fun searchTransactions(query: String): Flow<List<Transaction>> =
+        MutableStateFlow(
+            transactionMap.values.filter {
+                it.description.contains(query, ignoreCase = true) ||
+                    it.rawLine.contains(query, ignoreCase = true)
+            }
+        ).asStateFlow()
+
+    // ── Persistence ───────────────────────────────────────────────────────────
+
+    private fun readPersisted(): List<Transaction> {
+        val raw = prefs.getString(KEY_TRANSACTIONS, null) ?: return emptyList()
+        return try {
+            val array = JSONArray(raw)
+            (0 until array.length()).mapNotNull { index ->
+                val item = array.optJSONObject(index) ?: return@mapNotNull null
+                val id = item.optString("id")
+                if (id.isEmpty()) return@mapNotNull null
+                Transaction(
+                    id = id,
+                    date = item.optString("date"),
+                    description = item.optString("description"),
+                    amount = item.optDouble("amount", 0.0),
+                    category = item.optString("category", "Sonstiges"),
+                    rawLine = item.optString("rawLine"),
+                )
+            }
+        } catch (e: org.json.JSONException) {
+            emptyList()
         }
-        return flow.asStateFlow()
+    }
+
+    private fun writePersisted(transactions: Collection<Transaction>) {
+        val array = JSONArray()
+        transactions.forEach { tx ->
+            array.put(
+                JSONObject()
+                    .put("id", tx.id)
+                    .put("date", tx.date)
+                    .put("description", tx.description)
+                    .put("amount", tx.amount)
+                    .put("category", tx.category)
+                    .put("rawLine", tx.rawLine)
+            )
+        }
+        prefs.edit().putString(KEY_TRANSACTIONS, array.toString()).apply()
     }
 }

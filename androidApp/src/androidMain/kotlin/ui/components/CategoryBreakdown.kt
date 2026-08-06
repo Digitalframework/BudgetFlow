@@ -1,129 +1,84 @@
 package com.banking.app.ui.components
 
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.unit.dp
+import com.banking.app.ui.format.fmtEur
+import com.banking.app.ui.format.fmtPct
+import com.banking.app.ui.theme.T
+import com.banking.app.ui.theme.hexColor
 import com.banking.shared.data.Category
 import com.banking.shared.data.Transaction
 
+private data class CategoryRow(
+    val key: String,
+    val total: Double,
+    val count: Int,
+    val label: String,
+    val color: String,
+)
+
+/**
+ * Ranked magnitude chart: one series (spend), so every bar gets one hue. The
+ * category swatch beside each label carries identity, the label carries the
+ * name — colour is never the only channel. Tapping a row filters.
+ */
 @Composable
 fun CategoryBreakdown(
     transactions: List<Transaction>,
-    categories: List<Category>
+    categories: List<Category>,
+    activeCategory: String?,
+    onSelectCategory: (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text(
-                text = "Category Breakdown",
-                style = MaterialTheme.typography.titleLarge
+    val active = activeCategory ?: "all"
+
+    val rows = transactions
+        .groupBy { it.category }
+        .map { (key, list) ->
+            val category = categories.find { it.name == key }
+            CategoryRow(
+                key = key,
+                total = list.sumOf { it.amount },
+                count = list.size,
+                label = category?.label ?: key,
+                color = category?.color ?: "#7b7a74",
             )
-            Spacer(modifier = Modifier.height(16.dp))
+        }
+        .sortedByDescending { it.total }
 
-            if (transactions.isEmpty()) {
-                Text(
-                    text = "No data to display",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+    val sum = rows.sumOf { it.total }
+    val max = rows.firstOrNull()?.total ?: 1.0
+
+    Panel(
+        modifier = modifier,
+        title = "Ausgaben nach Kategorie",
+        extra = if (rows.isNotEmpty()) {
+            "${rows.size}/${categories.size} · ${fmtEur(sum)}"
+        } else null,
+        bodyPadding = PaddingValues(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 12.dp),
+    ) {
+        if (rows.isEmpty()) {
+            EmptyHint(modifier = Modifier.padding(horizontal = 10.dp))
+        } else {
+            rows.forEach { row ->
+                val share = if (sum != 0.0) row.total / sum else 0.0
+                val isActive = active == row.key
+
+                BarRow(
+                    name = row.label,
+                    value = fmtEur(row.total),
+                    share = fmtPct(share),
+                    fraction = (row.total / max).toFloat(),
+                    dotColor = hexColor(row.color),
+                    barColor = T.accent,
+                    selected = isActive,
+                    dimmed = !(isActive || active == "all"),
+                    onClick = { onSelectCategory(if (isActive) "all" else row.key) },
                 )
-            } else {
-                val breakdown = remember(transactions) {
-                    val total = transactions.sumOf { it.amount }
-                    transactions.groupBy(
-                        { it.category },
-                        { it.amount }
-                    ).mapValues { it.value.sum() }
-                        .mapValues { it.value / total * 100 }
-                }
-
-                // Pie Chart
-                Canvas(
-                    modifier = Modifier
-                        .size(200.dp)
-                        .padding(16.dp)
-                ) {
-                    drawPieChart(breakdown, categories)
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Legend
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    breakdown.entries.sortedByDescending { it.value }.forEach { (category, percentage) ->
-                        val cat = categories.find { it.name == category }
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(16.dp)
-                                        .wrapContentSize()
-                                ) {
-                                    Canvas(modifier = Modifier.size(16.dp)) {
-                                        drawCircle(
-                                            color = Color(android.graphics.Color.parseColor(cat?.color ?: "#8c8c8c")),
-                                            radius = 8.dp.toPx()
-                                        )
-                                    }
-                                }
-                                Text(
-                                    text = "${cat?.icon ?: "❓"} ${cat?.label ?: category}",
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                            Text(
-                                text = "%.1f%%".format(percentage),
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-                    }
-                }
             }
         }
-    }
-}
-
-private fun DrawScope.drawPieChart(
-    breakdown: Map<String, Double>,
-    categories: List<Category>
-) {
-    if (breakdown.isEmpty()) return
-
-    val sortedEntries = breakdown.entries.sortedByDescending { it.value }
-    var startAngle = 0f
-
-    sortedEntries.forEach { (category, percentage) ->
-        val cat = categories.find { it.name == category }
-        val sweepAngle = (percentage / 100 * 360).toFloat()
-        val color = Color(android.graphics.Color.parseColor(cat?.color ?: "#8c8c8c"))
-
-        drawArc(
-            color = color,
-            startAngle = startAngle,
-            sweepAngle = sweepAngle,
-            useCenter = true,
-            topLeft = Offset(0f, 0f),
-            size = Size(size.width, size.height)
-        )
-
-        startAngle += sweepAngle
     }
 }

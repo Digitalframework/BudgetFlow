@@ -29,6 +29,9 @@ kotlin {
                 implementation("androidx.compose.material:material-icons-extended:1.5.4")
                 implementation("androidx.core:core-ktx:1.12.0")
                 implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
+                // Text extraction for imported statements — the Android
+                // counterpart of PDF.js on the web.
+                implementation("com.tom-roush:pdfbox-android:2.0.27.0")
             }
         }
     }
