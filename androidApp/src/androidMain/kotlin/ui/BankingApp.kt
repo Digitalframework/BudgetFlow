@@ -56,11 +56,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.banking.app.data.BalanceStore
 import com.banking.app.data.BudgetStore
 import com.banking.app.pdf.PdfTextExtractor
 import com.banking.app.ui.components.BudgetsPage
 import com.banking.app.ui.components.CategoryBreakdown
 import com.banking.app.ui.components.MonthlyTrend
+import com.banking.app.ui.components.SavingsCard
 import com.banking.app.ui.components.SidebarFilters
 import com.banking.app.ui.components.StatTiles
 import com.banking.app.ui.components.TopMerchants
@@ -91,6 +93,9 @@ fun BankingApp(viewModel: TransactionViewModel) {
 
     val budgetStore = remember { BudgetStore(context) }
     var budgets by remember { mutableStateOf(budgetStore.load()) }
+
+    val balanceStore = remember { BalanceStore(context) }
+    var balances by remember { mutableStateOf(balanceStore.load()) }
 
     // The filter lives here, not in the ViewModel: every chart needs the full
     // list to scope itself differently, exactly like the web app does.
@@ -139,15 +144,16 @@ fun BankingApp(viewModel: TransactionViewModel) {
             val name = withContext(Dispatchers.IO) { PdfTextExtractor.displayName(context, uri) }
             val parsed = withContext(Dispatchers.IO) {
                 runCatching {
-                    BankStatementParser.parseTransactions(
-                        PdfTextExtractor.extractLines(context, uri)
-                    )
+                    val lines = PdfTextExtractor.extractLines(context, uri)
+                    BankStatementParser.parseTransactions(lines) to
+                        BankStatementParser.parseBalances(lines)
                 }
             }
             parsing = false
 
             parsed.fold(
-                onSuccess = { list ->
+                onSuccess = { (list, parsedBalances) ->
+                    balances = balanceStore.add(parsedBalances)
                     if (list.isEmpty()) {
                         snackbarHostState.showSnackbar(
                             "Keine Transaktionen erkannt. Bitte prüfe das PDF-Format."
@@ -334,6 +340,8 @@ fun BankingApp(viewModel: TransactionViewModel) {
                         ) {
                             StatTiles(transactions = filteredTx, categories = categories)
 
+                            SavingsCard(balances = balances, month = filter.month)
+
                             CategoryBreakdown(
                                 transactions = scoped,
                                 categories = categories,
@@ -392,6 +400,7 @@ fun BankingApp(viewModel: TransactionViewModel) {
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.clearAll()
+                    balances = balanceStore.clear()
                     filter = TransactionFilter()
                     showClearDialog = false
                     scope.launch { snackbarHostState.showSnackbar("Daten gelöscht") }

@@ -1,5 +1,7 @@
 package utils
 
+import com.banking.shared.data.AccountBalance
+import com.banking.shared.data.BalanceKind
 import com.banking.shared.data.Transaction
 
 object BankStatementParser {
@@ -7,9 +9,98 @@ object BankStatementParser {
     private val TX_HEADER = Regex("""^(\d{2}\.\d{2}\.(?:\d{2,4})?)\s+(\d{2}\.\d{2}\.(?:\d{2,4})?)\s+(.*)""")
     private val AMOUNT_AT_END = Regex("""(\d{1,3}(?:\.\d{3})*,\d{2})\s*([SsHh+-]?)\s*$""")
     private val SKIP_LINE = Regex(
-        """(\d{2}:\d{2}:\d{2}|REF\s+\d|ECTL|GIR\s+\d|PN:\d|\d{6,}|Kartenzahlung|girocard|Lastschrift|Überweisung|SEPA|Dauerauftrag|Gutschrift|Einzug)""",
+        """(\d{2}:\d{2}:\d{2}|REF\s+\d|ECTL|GIR\s+\d|PN:\d|\d{6,}|Kartenzahlung|girocard|Lastschrift|Überweisung|SEPA|Dauerauftrag|Gutschrift|Einzug|[ÜU]bertrag|Kontostand|Blatt\s+\d|Kontoauszug|Kontokorrent|Kontonummer|Bankleitzahl|Bu-Tag|Bitte beachten)""",
         RegexOption.IGNORE_CASE
     )
+
+    // A sheet break splits a booking from its detail lines: the sheet ends with
+    // "Übertrag auf Blatt N", the next one opens with the bank address, the
+    // column headers and "Übertrag von Blatt N-1" before the booking continues.
+    private val PAGE_BREAK_START = Regex("""[ÜU]bertrag\s+auf\s+Blatt""", RegexOption.IGNORE_CASE)
+    private val PAGE_BREAK_END = Regex("""[ÜU]bertrag\s+von\s+Blatt""", RegexOption.IGNORE_CASE)
+
+    /** Generous bound on the furniture between two sheets; the real block is ~15 lines. */
+    private const val MAX_PAGE_BREAK_LINES = 40
+
+    /**
+     * Drop the carry-forward block between two sheets.
+     *
+     * Without it the "Übertrag auf Blatt 3   1.047,71 H" footer is the first
+     * continuation line of the booking at the bottom of the sheet, so it becomes
+     * that booking's merchant name — and the carry-forward total, which is a
+     * running balance and not a payment, reads as if it were the merchant.
+     */
+    fun stripPageBreaks(lines: List<String>): List<String> {
+        val kept = mutableListOf<String>()
+        var i = 0
+
+        while (i < lines.size) {
+            if (PAGE_BREAK_START.containsMatchIn(lines[i])) {
+                val end = (i + 1 until minOf(lines.size, i + 1 + MAX_PAGE_BREAK_LINES))
+                    .firstOrNull { PAGE_BREAK_END.containsMatchIn(lines[it]) }
+                // No matching header means this was the last sheet's footer —
+                // drop that one line rather than the rest of the document.
+                i = (end ?: i) + 1
+                continue
+            }
+
+            kept.add(lines[i])
+            i++
+        }
+
+        return kept
+    }
+
+    /**
+     * "alter Kontostand vom 30.12.2025" / "neuer Kontostand vom 31.01.2026".
+     * The day is normally the 30th or 31st, but a short month closes on the 28th
+     * or 29th, so the day itself is not part of the match.
+     */
+    private val BALANCE_HEADER = Regex(
+        """(alter|neuer)\s+Kontostand\s+vom\s+(\d{1,2}\.\d{1,2}\.\d{2,4})(.*)""",
+        RegexOption.IGNORE_CASE
+    )
+
+    /** A balance always carries its H/S indicator; without one it is not a balance. */
+    private val BALANCE_AMOUNT = Regex("""(\d{1,3}(?:\.\d{3})*,\d{2})\s*([SsHh])(?![A-Za-z])""")
+
+    /**
+     * Opening and closing balances of the statement.
+     *
+     * The amount usually sits on the same extracted line as the label, but a
+     * PDF that puts the figure on its own text row would break that, so the
+     * next two lines are searched as a fallback.
+     */
+    fun parseBalances(lines: List<String>): List<AccountBalance> {
+        val balances = mutableListOf<AccountBalance>()
+
+        lines.forEachIndexed { index, line ->
+            val header = BALANCE_HEADER.find(line) ?: return@forEachIndexed
+            val date = parseDateStr(header.groupValues[2]) ?: return@forEachIndexed
+
+            val amount = balanceAmount(header.groupValues[3])
+                ?: lines.drop(index + 1).take(2).firstNotNullOfOrNull { balanceAmount(it) }
+                ?: return@forEachIndexed
+
+            val kind = if (header.groupValues[1].lowercase().startsWith("alter")) {
+                BalanceKind.OPENING
+            } else {
+                BalanceKind.CLOSING
+            }
+
+            balances.add(AccountBalance(date = date, amount = amount, kind = kind))
+        }
+
+        return balances.distinctBy { "${it.kind}_${it.date}" }
+    }
+
+    /** Signed balance: "H" (Haben) is credit, "S" (Soll) an overdraft. */
+    private fun balanceAmount(text: String): Double? {
+        val match = BALANCE_AMOUNT.find(text) ?: return null
+        val value = match.groupValues[1].replace(".", "").replace(",", ".").toDoubleOrNull()
+            ?: return null
+        return if (match.groupValues[2].uppercase() == "S") -value else value
+    }
 
     fun parseDateStr(raw: String): String? {
         val match = Regex("""(\d{2})\.(\d{2})\.(\d{2,4})?""").find(raw) ?: return null
@@ -64,7 +155,8 @@ object BankStatementParser {
             .trim()
     }
 
-    fun parseTransactions(lines: List<String>): List<Transaction> {
+    fun parseTransactions(rawLines: List<String>): List<Transaction> {
+        val lines = stripPageBreaks(rawLines)
         val transactions = mutableListOf<Transaction>()
         var id = 0
         var i = 0

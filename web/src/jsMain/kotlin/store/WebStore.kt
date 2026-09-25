@@ -1,5 +1,8 @@
 package store
 
+import com.banking.shared.data.AccountBalance
+import com.banking.shared.data.BalanceKind
+import com.banking.shared.data.SavingsCalculator
 import com.banking.shared.data.Transaction
 import com.banking.shared.data.TransactionFilter
 import kotlinx.browser.localStorage
@@ -9,6 +12,7 @@ private const val STORAGE_KEY_TRANSACTIONS = "banking_transactions"
 private const val STORAGE_KEY_FILTER = "banking_filter"
 private const val STORAGE_KEY_PDF_NAME = "banking_pdf_filename"
 private const val STORAGE_KEY_BUDGETS = "banking_budgets"
+private const val STORAGE_KEY_BALANCES = "banking_balances"
 
 class WebStore {
 
@@ -19,6 +23,9 @@ class WebStore {
 
     /** Monthly spending limit per category name. A missing key means "not set yet". */
     private var budgets: MutableMap<String, Double> = mutableMapOf()
+
+    /** Opening/closing balances collected from every imported statement. */
+    private var balances: MutableList<AccountBalance> = mutableListOf()
 
     private val listeners: MutableList<() -> Unit> = mutableListOf()
 
@@ -37,6 +44,7 @@ class WebStore {
     fun getFilter(): TransactionFilter = filter
     fun getPdfFileName(): String? = pdfFileName
     fun getBudgets(): Map<String, Double> = budgets.toMap()
+    fun getBalances(): List<AccountBalance> = balances.toList()
 
     /** Passing a null or non-positive limit clears the budget for that category. */
     fun setBudget(category: String, limit: Double?) {
@@ -70,6 +78,13 @@ class WebStore {
         notifyListeners()
     }
 
+    /** Re-importing the same statement is a no-op; balances dedupe on kind + date. */
+    fun addBalances(newBalances: List<AccountBalance>) {
+        if (newBalances.isEmpty()) return
+        balances = SavingsCalculator.merge(balances, newBalances).toMutableList()
+        notifyListeners()
+    }
+
     fun updateCategory(transactionId: String, category: String) {
         val index = transactions.indexOfFirst { it.id == transactionId }
         if (index != -1) {
@@ -81,6 +96,7 @@ class WebStore {
 
     fun clearAll() {
         transactions.clear()
+        balances.clear()
         pdfFileName = null
         notifyListeners()
     }
@@ -102,6 +118,11 @@ class WebStore {
                 budgets = parseBudgets(savedBudgets).toMutableMap()
             }
 
+            val savedBalances = localStorage.getItem(STORAGE_KEY_BALANCES)
+            if (savedBalances != null) {
+                balances = parseBalances(savedBalances).toMutableList()
+            }
+
             pdfFileName = localStorage.getItem(STORAGE_KEY_PDF_NAME)
         } catch (e: Exception) {
             //window.console.error("Error loading persisted data: ${e.message}")
@@ -114,6 +135,7 @@ class WebStore {
             localStorage.setItem(STORAGE_KEY_TRANSACTIONS, serializeTransactions(transactions))
             localStorage.setItem(STORAGE_KEY_FILTER, serializeFilter(filter))
             localStorage.setItem(STORAGE_KEY_BUDGETS, serializeBudgets(budgets))
+            localStorage.setItem(STORAGE_KEY_BALANCES, serializeBalances(balances))
             if (pdfFileName != null) {
                 localStorage.setItem(STORAGE_KEY_PDF_NAME, pdfFileName!!)
             } else {
@@ -177,6 +199,29 @@ class WebStore {
             val limit = Regex(""""limit":(-?[0-9.]+)""").find(obj)?.groupValues?.get(1)?.toDoubleOrNull()
             if (category.isNotEmpty() && limit != null && limit > 0.0) {
                 result[category] = limit
+            }
+        }
+        return result
+    }
+
+    private fun serializeBalances(balances: List<AccountBalance>): String {
+        val items = balances.map { balance ->
+            """{"date":"${balance.date}","amount":${balance.amount},"kind":"${balance.kind.name}"}"""
+        }
+        return buildJsonArray(items)
+    }
+
+    private fun parseBalances(json: String): List<AccountBalance> {
+        val result = mutableListOf<AccountBalance>()
+        Regex("""\{[^}]+\}""").findAll(json).forEach { match ->
+            val obj = match.value
+            val date = Regex(""""date":"([^"]+)"""").find(obj)?.groupValues?.get(1) ?: ""
+            val amount = Regex(""""amount":(-?[0-9.]+)""").find(obj)?.groupValues?.get(1)?.toDoubleOrNull()
+            val kind = Regex(""""kind":"([^"]+)"""").find(obj)?.groupValues?.get(1)
+                ?.let { name -> BalanceKind.entries.find { it.name == name } }
+
+            if (date.isNotEmpty() && amount != null && kind != null) {
+                result.add(AccountBalance(date, amount, kind))
             }
         }
         return result

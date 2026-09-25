@@ -22,7 +22,7 @@ class CategoryMapper private constructor() {
             color = "#199e70",
             icon = "🛒",
             keywords = listOf(
-                "edeka", "rewe", "kaufland", "erdimili", "lidl", "aldi",
+                "edeka", "rewe", "kaufland", "erdimili", "erdemli", "lidl", "aldi",
                 "netto", "penny", "Baeckerei", "Backstube", "Gercek Supermarket",
                 "picnic", "kaisermarkt", "hepsi", "zurheide"
             )

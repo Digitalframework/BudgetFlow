@@ -1,6 +1,7 @@
 package com.banking.web
 
 import antd.*
+import com.banking.shared.data.AccountBalance
 import com.banking.shared.data.CategoryMapper
 import com.banking.shared.data.Transaction
 import com.banking.shared.data.TransactionFilter
@@ -63,6 +64,7 @@ val BankingApp: FC<Props> = FC {
   var loading by useState(false)
   var filter by useState(TransactionFilter())
   var budgets by useState<Map<String, Double>>(emptyMap())
+  var balances by useState<List<AccountBalance>>(emptyList())
   var view by useState("overview")
   var collapsed by useState(false)
   var showClearDialog by useState(false)
@@ -75,12 +77,14 @@ val BankingApp: FC<Props> = FC {
     transactions = store.getTransactions()
     filter = store.getFilter()
     budgets = store.getBudgets()
+    balances = store.getBalances()
 
     val unsubscribe = store.subscribe {
       transactions = store.getTransactions()
       loading = store.isLoading()
       filter = store.getFilter()
       budgets = store.getBudgets()
+      balances = store.getBalances()
     }
 
     try {
@@ -117,7 +121,8 @@ val BankingApp: FC<Props> = FC {
   val handleUpload: (File) -> Unit = { file ->
     store.setLoading(true)
     loading = true
-    processFile(file) { parsed ->
+    processFile(file) { parsed, parsedBalances ->
+      store.addBalances(parsedBalances)
       if (parsed.isEmpty()) {
         message.warning("Keine Transaktionen erkannt. Bitte prüfe das PDF-Format.")
       } else {
@@ -342,6 +347,11 @@ val BankingApp: FC<Props> = FC {
                         this.categories = categories
                       }
 
+                      SavingsCard {
+                        this.balances = balances
+                        this.month = filter.month
+                      }
+
                       CategoryBreakdown {
                         this.transactions = scoped
                         this.categories = categories
@@ -437,15 +447,21 @@ val BankingApp: FC<Props> = FC {
   }
 }
 
-private fun processFile(file: File, callback: (List<Transaction>) -> Unit) {
+private fun processFile(
+  file: File,
+  callback: (List<Transaction>, List<AccountBalance>) -> Unit,
+) {
   GlobalScope.launch {
     try {
-      val lines = PdfTextExtractor.extractPdfLines(file).await()
-      callback(BankStatementParser.parseTransactions(lines.toList()))
+      val lines = PdfTextExtractor.extractPdfLines(file).await().toList()
+      callback(
+        BankStatementParser.parseTransactions(lines),
+        BankStatementParser.parseBalances(lines),
+      )
     } catch (e: Throwable) {
       console.error("PDF extraction failed:", e)
       message.error("Fehler beim Lesen der PDF")
-      callback(emptyList())
+      callback(emptyList(), emptyList())
     }
   }
 }
