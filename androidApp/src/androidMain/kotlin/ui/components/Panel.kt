@@ -37,9 +37,9 @@ fun Panel(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
+            .clip(RoundedCornerShape(22.dp))
             .background(T.surface)
-            .border(1.dp, T.border, RoundedCornerShape(14.dp)),
+            .border(1.dp, T.border, RoundedCornerShape(22.dp)),
     ) {
         if (title != null || extra != null) {
             Row(

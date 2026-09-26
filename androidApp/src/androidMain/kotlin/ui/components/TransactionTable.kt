@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -103,84 +104,35 @@ private fun TransactionRow(
 ) {
     var menuOpen by remember { mutableStateOf(false) }
     val category = categories.find { it.name == transaction.category }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 8.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(T.surface)
-            .border(1.dp, T.border, RoundedCornerShape(12.dp))
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+            .clip(RoundedCornerShape(20.dp)).background(T.surface).padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = "${fmtDay(transaction.date)} ${transaction.date.take(4)}",
-                fontSize = 12.sp,
-                color = T.textSecondary,
-            )
-            Text(
-                text = fmtEur(transaction.amount),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = T.text,
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 12.dp),
-                textAlign = androidx.compose.ui.text.style.TextAlign.End,
-            )
-        }
-
-        Text(
-            text = transaction.description,
-            fontSize = 13.sp,
-            color = T.text,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
-        )
-
-        Box {
-            Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(99.dp))
-                    .background(T.surfaceAlt)
-                    .border(1.dp, T.border, RoundedCornerShape(99.dp))
-                    .clickable { menuOpen = true }
-                    .padding(start = 7.dp, end = 9.dp, top = 3.dp, bottom = 3.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(7.dp),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(7.dp)
-                        .clip(RoundedCornerShape(99.dp))
-                        .background(hexColor(category?.color)),
-                )
-                Text(
-                    text = category?.label ?: transaction.category,
-                    fontSize = 12.sp,
-                    color = T.textSecondary,
-                )
-            }
-
-            DropdownMenu(
-                expanded = menuOpen,
-                onDismissRequest = { menuOpen = false },
-            ) {
-                categories.forEach { option ->
-                    DropdownMenuItem(
-                        text = { Text("${option.icon} ${option.label}") },
-                        onClick = {
-                            onCategoryChange(option.name)
-                            menuOpen = false
-                        },
-                    )
+        Box(
+            Modifier.size(44.dp).clip(RoundedCornerShape(50))
+                .background(hexColor(category?.color).copy(alpha = .13f)),
+            contentAlignment = Alignment.Center,
+        ) { Text(category?.icon ?: "•", fontSize = 21.sp) }
+        Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
+            Text(transaction.description, color = T.text, fontSize = 14.sp,
+                fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text("${fmtDay(transaction.date)} ${transaction.date.take(4)}", color = T.textMuted,
+                fontSize = 11.sp, modifier = Modifier.padding(top = 3.dp))
+            Box {
+                TextButton(onClick = { menuOpen = true }, contentPadding = PaddingValues(0.dp)) {
+                    Text("${category?.label ?: transaction.category} ▾", color = T.accent, fontSize = 12.sp)
+                }
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    categories.forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text("${option.icon} ${option.label}") },
+                            onClick = { onCategoryChange(option.name); menuOpen = false },
+                        )
+                    }
                 }
             }
         }
+        Text(fmtEur(transaction.amount), color = T.text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
     }
 }

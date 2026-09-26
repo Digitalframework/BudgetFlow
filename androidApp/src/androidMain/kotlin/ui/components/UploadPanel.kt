@@ -64,20 +64,10 @@ fun UploadPanel(
         modifier = modifier
             .fillMaxWidth()
             .widthIn(max = 520.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(24.dp))
             .background(T.surface)
-            .drawBehind {
-                drawRoundRect(
-                    color = T.borderStrong,
-                    cornerRadius = CornerRadius(16.dp.toPx()),
-                    style = Stroke(
-                        width = 1.dp.toPx(),
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 8f)),
-                    ),
-                )
-            }
             .clickable { pick() }
-            .padding(horizontal = 20.dp, vertical = 32.dp),
+            .padding(horizontal = 20.dp, vertical = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
@@ -90,14 +80,14 @@ fun UploadPanel(
                 .padding(bottom = 8.dp),
         )
         Text(
-            text = "Kontoauszug als PDF auswählen",
+            text = "Dein erster Kontoauszug",
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold,
             color = T.text,
             textAlign = TextAlign.Center,
         )
         Text(
-            text = "Sparkasse, ING, DKB, Commerzbank, Volksbank & mehr.\n" +
+            text = "Ausgaben automatisch ordnen und verstehen.\n" +
                 "Die Auswertung passiert lokal auf dem Gerät.",
             fontSize = 13.sp,
             color = T.textMuted,

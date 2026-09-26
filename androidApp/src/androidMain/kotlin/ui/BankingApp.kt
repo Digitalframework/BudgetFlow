@@ -22,6 +22,9 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PieChart
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
@@ -64,7 +67,7 @@ import com.banking.app.ui.components.CategoryBreakdown
 import com.banking.app.ui.components.MonthlyTrend
 import com.banking.app.ui.components.SavingsCard
 import com.banking.app.ui.components.SidebarFilters
-import com.banking.app.ui.components.StatTiles
+import com.banking.app.ui.components.OverviewDashboard
 import com.banking.app.ui.components.TopMerchants
 import com.banking.app.ui.components.TransactionTable
 import com.banking.app.ui.components.UploadPanel
@@ -219,13 +222,13 @@ fun BankingApp(viewModel: TransactionViewModel) {
                             Column {
                                 Text(
                                     text = view.label,
-                                    fontSize = 15.sp,
+                                    fontSize = 25.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = T.text,
                                 )
                                 Text(
                                     text = when {
-                                        !hasData -> "Noch keine Daten"
+                                        !hasData -> "Deine Finanzen. Dein Überblick."
                                         view == View.Budgets ->
                                             "${budgets.size} " +
                                                 (if (budgets.size == 1) "Budget" else "Budgets") +
@@ -245,34 +248,30 @@ fun BankingApp(viewModel: TransactionViewModel) {
                             UploadPanel(onUpload = handleUpload, compact = true)
                             if (hasData) {
                                 IconButton(onClick = { showClearDialog = true }) {
-                                    Icon(
-                                        Icons.Default.Delete,
-                                        contentDescription = "Alle Daten löschen",
-                                        tint = T.critical,
-                                    )
+                                    Icon(Icons.Default.Delete, "Alle Daten löschen", tint = T.textMuted)
                                 }
                             }
                         },
                     )
-
-                    if (hasData) {
-                        ViewSwitcher(
-                            selected = view,
-                            onSelect = { view = it },
-                            modifier = Modifier.padding(
-                                start = 16.dp,
-                                end = 16.dp,
-                                bottom = 12.dp,
+                }
+            },
+            bottomBar = {
+                NavigationBar(containerColor = T.surface, tonalElevation = 0.dp) {
+                    View.values().forEach { destination ->
+                        NavigationBarItem(
+                            selected = view == destination,
+                            onClick = { view = destination },
+                            icon = { Icon(destination.icon, contentDescription = null) },
+                            label = { Text(destination.label, fontSize = 12.sp) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = T.accent,
+                                selectedTextColor = T.accent,
+                                indicatorColor = T.accentSoft,
+                                unselectedIconColor = T.textMuted,
+                                unselectedTextColor = T.textMuted,
                             ),
                         )
                     }
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(1.dp)
-                            .background(T.border),
-                    )
                 }
             },
         ) { padding ->
@@ -282,19 +281,6 @@ fun BankingApp(viewModel: TransactionViewModel) {
                     .padding(padding),
             ) {
                 when {
-                    !hasData -> {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
-                                .padding(horizontal = 16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                        ) {
-                            Box(modifier = Modifier.height(64.dp))
-                            UploadPanel(onUpload = handleUpload)
-                        }
-                    }
-
                     view == View.Table -> {
                         TransactionTable(
                             transactions = filteredTx,
@@ -338,28 +324,38 @@ fun BankingApp(viewModel: TransactionViewModel) {
                                 .padding(16.dp),
                             verticalArrangement = Arrangement.spacedBy(14.dp),
                         ) {
-                            StatTiles(transactions = filteredTx, categories = categories)
-
-                            SavingsCard(balances = balances, month = filter.month)
-
-                            CategoryBreakdown(
-                                transactions = scoped,
-                                categories = categories,
-                                activeCategory = filter.category,
-                                onSelectCategory = { filter = filter.copy(category = it) },
-                            )
-
-                            MonthlyTrend(
-                                transactions = allMonths,
-                                activeMonth = filter.month,
-                                onSelectMonth = { filter = filter.copy(month = it) },
-                            )
-
-                            TopMerchants(
+                            OverviewDashboard(
                                 transactions = filteredTx,
                                 categories = categories,
-                                onSelectMerchant = { filter = filter.copy(search = it) },
+                                period = subtitle,
+                                onUpload = handleUpload,
+                                onShowTransactions = { view = View.Table },
+                                onShowBudgets = { view = View.Budgets },
+                                hasImportedData = hasData,
                             )
+                            if (hasData) {
+
+                                SavingsCard(balances = balances, month = filter.month)
+
+                                CategoryBreakdown(
+                                    transactions = scoped,
+                                    categories = categories,
+                                    activeCategory = filter.category,
+                                    onSelectCategory = { filter = filter.copy(category = it) },
+                                )
+
+                                MonthlyTrend(
+                                    transactions = allMonths,
+                                    activeMonth = filter.month,
+                                    onSelectMonth = { filter = filter.copy(month = it) },
+                                )
+
+                                TopMerchants(
+                                    transactions = filteredTx,
+                                    categories = categories,
+                                    onSelectMerchant = { filter = filter.copy(search = it) },
+                                )
+                            }
                         }
                     }
                 }
@@ -414,51 +410,5 @@ fun BankingApp(viewModel: TransactionViewModel) {
                 }
             },
         )
-    }
-}
-
-/** The header's Segmented control from the web, as a Compose pill switcher. */
-@Composable
-private fun ViewSwitcher(
-    selected: View,
-    onSelect: (View) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(T.surfaceAlt)
-            .padding(3.dp),
-        horizontalArrangement = Arrangement.spacedBy(3.dp),
-    ) {
-        View.values().forEach { entry ->
-            val active = entry == selected
-            Row(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(if (active) T.accent else Color.Transparent)
-                    .clickable { onSelect(entry) }
-                    .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    imageVector = entry.icon,
-                    contentDescription = null,
-                    tint = if (active) Color.White else T.textMuted,
-                    modifier = Modifier.size(16.dp),
-                )
-                Text(
-                    text = entry.label,
-                    fontSize = 13.sp,
-                    color = if (active) Color.White else T.textSecondary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(start = 7.dp),
-                )
-            }
-        }
     }
 }

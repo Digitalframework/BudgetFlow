@@ -2,7 +2,7 @@ package com.banking.app.ui.theme
 
 import android.app.Activity
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
@@ -10,31 +10,25 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-/**
- * Design tokens, kept in sync with the web app (`web/src/jsMain/kotlin/design/Theme.kt`
- * and the CSS custom properties in `resources/index.html`).
- *
- * A single dark surface set — the web app has no light mode either, so following
- * the system theme here would put the two clients on different palettes.
- */
+/** Light mobile palette with indigo accents and quiet neutral surfaces. */
 object T {
-    val bg = Color(0xFF0E0E11)
-    val surface = Color(0xFF17171B)
-    val surfaceAlt = Color(0xFF1D1D23)
-    val surfaceHover = Color(0xFF23232A)
-    val border = Color(0x12FFFFFF)
-    val borderStrong = Color(0x24FFFFFF)
+    val bg = Color(0xFFF5F6FC)
+    val surface = Color(0xFFFFFFFF)
+    val surfaceAlt = Color(0xFFEEEFFC)
+    val surfaceHover = Color(0xFFE4E7F5)
+    val border = Color(0xFFECEEF6)
+    val borderStrong = Color(0xFFD8DCEE)
 
-    val text = Color(0xFFF4F4F3)
-    val textSecondary = Color(0xFFA9A8A2)
-    val textMuted = Color(0xFF77766F)
+    val text = Color(0xFF19234B)
+    val textSecondary = Color(0xFF626C88)
+    val textMuted = Color(0xFF747D96)
 
-    val accent = Color(0xFF3987E5)
-    val accentSoft = Color(0x243987E5)
-    val track = Color(0xFF24242B)
-    val grid = Color(0xFF26262B)
+    val accent = Color(0xFF424BD1)
+    val accentSoft = Color(0xFFE9EBFF)
+    val track = Color(0xFFE8EBF6)
+    val grid = Color(0xFFE8EBF6)
 
-    val good = Color(0xFF0CA30C)
+    val good = Color(0xFF16866B)
     val warn = Color(0xFFC98500)
     val critical = Color(0xFFD03B3B)
 }
@@ -46,7 +40,7 @@ fun hexColor(hex: String?): Color = try {
     T.textMuted
 }
 
-private val DarkColorScheme = darkColorScheme(
+private val LightColorScheme = lightColorScheme(
     primary = T.accent,
     onPrimary = Color.White,
     primaryContainer = T.surfaceAlt,
@@ -74,12 +68,13 @@ fun BankingAppTheme(content: @Composable () -> Unit) {
             val window = (view.context as Activity).window
             window.statusBarColor = T.bg.toArgb()
             window.navigationBarColor = T.bg.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
+            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = true
         }
     }
 
     MaterialTheme(
-        colorScheme = DarkColorScheme,
+        colorScheme = LightColorScheme,
         content = content,
     )
 }
